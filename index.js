@@ -39,15 +39,15 @@ morgan.token('body', (req, res) => {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-app.get('/contacts', (req, res) => {
+app.get('/api/contacts', (req, res) => {
     res.send(persons)
 })
 
-app.get('/info', (req, res) => {
+app.get('/api/info', (req, res) => {
     res.send(`<p>Puhelinluettelossa on ${persons.length} henkilön tiedot</p>\n${new Date}`)
 })
 
-app.get('/contacts/:id', (req, res) => {
+app.get('/api/contacts/:id', (req, res) => {
     const id = Number(req.params.id)
     const person = persons.find(person => person.id === id)
     
@@ -58,14 +58,14 @@ app.get('/contacts/:id', (req, res) => {
     }  
 })
 
-app.delete('/contacts/:id', (req, res) => {
+app.delete('/api/contacts/:id', (req, res) => {
     const id = Number(req.params.id)
     persons = persons.filter(person => person.id !== id)
 
     res.status(204).end()
 })
 
-app.post('/contacts', (req, res) => {
+app.post('/api/contacts', (req, res) => {
     const body = req.body
 
     if(!body.name || !body.number) {
