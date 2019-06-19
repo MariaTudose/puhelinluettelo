@@ -1,0 +1,93 @@
+const express = require('express')
+const app = express()
+const bodyParser = require('body-parser')
+const morgan = require('morgan')
+const cors = require('cors')
+
+let persons = [
+    {
+        "name": "Arto Hellas",
+        "number": "040-123456",
+        "id": 1
+    },
+    {
+        "name": "Arto Järvinen",
+        "number": "040-123456",
+        "id": 2
+    },
+    {
+        "name": "Lea Kutvonen",
+        "number": "040-123456",
+        "id": 3
+    },
+    {
+        "name": "Martti Tienari",
+        "number": "040-123456",
+        "id": 4
+    }
+
+]
+
+app.use(bodyParser.json())
+app.use(morgan('tiny'))
+app.use(cors())
+
+
+morgan.token('body', (req, res) => { 
+    return JSON.stringify(req.body) 
+})
+
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+
+app.get('/contacts', (req, res) => {
+    res.send(persons)
+})
+
+app.get('/info', (req, res) => {
+    res.send(`<p>Puhelinluettelossa on ${persons.length} henkilön tiedot</p>\n${new Date}`)
+})
+
+app.get('/contacts/:id', (req, res) => {
+    const id = Number(req.params.id)
+    const person = persons.find(person => person.id === id)
+    
+    if (person) {
+        res.json(person)
+    } else {
+        res.status(404).end()
+    }  
+})
+
+app.delete('/contacts/:id', (req, res) => {
+    const id = Number(req.params.id)
+    persons = persons.filter(person => person.id !== id)
+
+    res.status(204).end()
+})
+
+app.post('/contacts', (req, res) => {
+    const body = req.body
+
+    if(!body.name || !body.number) {
+        return res.status(400).json({
+            error: 'missing information'
+        })
+    } else if(persons.some(person => person.name === body.name)) {
+        return res.status(400).json({
+            error: 'name must be unique'
+        })
+    }
+    
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: Math.floor(Math.random()*1000000)
+    }
+
+    persons = persons.concat(person)
+
+    res.json(person)
+})
+
+const port = process.env.PORT || 3001
+app.listen(port)
