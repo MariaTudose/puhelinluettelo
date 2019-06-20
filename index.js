@@ -12,6 +12,7 @@ app.use(morgan('tiny'))
 app.use(cors())
 app.use(express.static('build'))
 
+
 morgan.token('body', (req, res) => { 
     return JSON.stringify(req.body) 
 })
@@ -30,20 +31,20 @@ app.get('/api/info', (req, res) => {
     )
 })
 
-app.get('/api/contacts/:id', (req, res) => {
+app.get('/api/contacts/:id', (req, res, next) => {
     Contact.findById(req.params.id).then(contact => {
         res.json(contact.toJSON())
         .catch(error => next(error))
     })
 })
 
-app.delete('/api/contacts/:id', (req, res) => {
+app.delete('/api/contacts/:id', (req, res, next) => {
     Contact.findByIdAndRemove(req.params.id)
            .then(contact => res.status(204).end())
            .catch(error => next(error))
 })
 
-app.post('/api/contacts', (req, res) => {
+app.post('/api/contacts', (req, res, next) => {
     const body = req.body
 
     if(!body.name || !body.number) {
@@ -51,6 +52,13 @@ app.post('/api/contacts', (req, res) => {
             error: 'missing information'
         })
     }
+    Contact.find({ name: body.name} ).then(result => {
+        if(result.length) {
+            return res.status(422).json({
+                error: 'contact is already in the address book'
+            })
+        }
+    })
 
     const contact = new Contact({
         name: body.name,
@@ -59,16 +67,16 @@ app.post('/api/contacts', (req, res) => {
 
     contact.save().then(savedContact => {
         res.json(savedContact.toJSON())
-    })
+    }).catch(error => next(error))
 })
 
-app.put('/api/contacts/:id', (req, res) => {
+app.put('/api/contacts/:id', (req, res, next) => {
     const body = req.body
 
-    const contact = new Contact({
+    const contact = {
         name: body.name,
         number: body.number,
-    })
+    }
 
     Contact.findByIdAndUpdate(req.params.id, contact, {new: true})
            .then(updatedContact => {
@@ -88,6 +96,8 @@ const errorHandler = (error, request, response, next) => {
 
     if (error.name === 'CastError' && error.kind == 'ObjectId') {
         return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json(error.message)
     }
 
     next(error)
