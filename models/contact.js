@@ -5,14 +5,12 @@ mongoose.set('useFindAndModify', false)
 
 const url = process.env.MONGODB_URI
 
-mongoose.connect(url, { useNewUrlParser: true }).catch((err) => console.log(err));
+mongoose.connect(url, { useNewUrlParser: true }).catch((err) => console.log(err))
 
 console.log('connecting to', url)
 
 mongoose.connect(url, { useNewUrlParser: true })
-    .then(result => {
-        console.log('connected to MongoDB')
-    })
+    .then(console.log('connected to MongoDB'))
     .catch((error) => {
         console.log('error connecting to MongoDB:', error.message)
     })

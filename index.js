@@ -13,8 +13,8 @@ app.use(cors())
 app.use(express.static('build'))
 
 
-morgan.token('body', (req, res) => { 
-    return JSON.stringify(req.body) 
+morgan.token('body', (req) => {
+    return JSON.stringify(req.body)
 })
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
@@ -26,7 +26,7 @@ app.get('/api/contacts', (req, res) => {
 })
 
 app.get('/api/info', (req, res) => {
-    Contact.find({}).then(contacts => 
+    Contact.find({}).then(contacts =>
         res.send(`<p>Puhelinluettelossa on ${contacts.length} henkilön tiedot</p>\n${new Date}`)
     )
 })
@@ -34,26 +34,26 @@ app.get('/api/info', (req, res) => {
 app.get('/api/contacts/:id', (req, res, next) => {
     Contact.findById(req.params.id).then(contact => {
         res.json(contact.toJSON())
-        .catch(error => next(error))
+            .catch(error => next(error))
     })
 })
 
 app.delete('/api/contacts/:id', (req, res, next) => {
     Contact.findByIdAndRemove(req.params.id)
-           .then(contact => res.status(204).end())
-           .catch(error => next(error))
+        .then(res.status(204).end())
+        .catch(error => next(error))
 })
 
 app.post('/api/contacts', (req, res, next) => {
     const body = req.body
 
-    if(!body.name || !body.number) {
+    if (!body.name || !body.number) {
         return res.status(400).json({
             error: 'missing information'
         })
     }
-    Contact.find({ name: body.name} ).then(result => {
-        if(result.length) {
+    Contact.find({ name: body.name }).then(result => {
+        if (result.length) {
             return res.status(422).json({
                 error: 'contact is already in the address book'
             })
@@ -78,11 +78,11 @@ app.put('/api/contacts/:id', (req, res, next) => {
         number: body.number,
     }
 
-    Contact.findByIdAndUpdate(req.params.id, contact, {new: true})
-           .then(updatedContact => {
-               res.json(updatedContact.toJSON())
-           })
-           .catch(error => next(error))
+    Contact.findByIdAndUpdate(req.params.id, contact, { new: true })
+        .then(updatedContact => {
+            res.json(updatedContact.toJSON())
+        })
+        .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -92,14 +92,11 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-    console.error(error.message)
-
-    if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
         return response.status(400).send({ error: 'malformatted id' })
     } else if (error.name === 'ValidationError') {
         return response.status(400).json(error.message)
     }
-
     next(error)
 }
 
